@@ -10,6 +10,26 @@ import torch.nn as nn
 from PIL import Image
 
 
+class SiLU(nn.Module):
+    """export-friendly version of nn.SiLU()"""
+
+    @staticmethod
+    def forward(x):
+        return x * torch.sigmoid(x)
+
+
+def get_activation(name="silu", inplace=True):
+    if name == "silu":
+        act = nn.SiLU(inplace=inplace)
+    elif name == "relu":
+        act = nn.ReLU(inplace=inplace)
+    elif name == "lrelu":
+        act = nn.LeakyReLU(0.1, inplace=inplace)
+    else:
+        raise AttributeError("Unsupported act type: {}".format(name))
+    return act
+
+
 def autopad(k, p=None, d=1):  # kernel, padding, dilation
     # Pad to 'same' shape outputs
     if d > 1:
@@ -20,15 +40,13 @@ def autopad(k, p=None, d=1):  # kernel, padding, dilation
 
 
 class Conv(nn.Module):
-    # Standard convolution with args(ch_in, ch_out, kernel, stride, padding, groups, dilation, activation)
-    default_act = nn.SiLU()  # default activation
-
-    def __init__(self, in_channels, out_channels, ksize=1, stride=1, padding=None, group=1, dilation=1, act=True):
+    # Standard convolution with args(ch_in, ch_out, kernel, stride, padding, groups, dilation, activation
+    def __init__(self, in_channels, out_channels, ksize=1, stride=1, padding=None, group=1, dilation=1, act='silu'):
         super().__init__()
         self.conv = nn.Conv2d(in_channels, out_channels, ksize, stride, autopad(ksize, padding, dilation),
                               groups=group, dilation=dilation, bias=False)
         self.bn = nn.BatchNorm2d(out_channels)
-        self.act = self.default_act if act is True else act if isinstance(act, nn.Module) else nn.Identity()
+        self.act = get_activation(act, inplace=True) if act else nn.Identity()
 
     def forward(self, x):
         return self.act(self.bn(self.conv(x)))
@@ -110,7 +128,7 @@ class BottleneckCSP(nn.Module):
         self.conv3 = nn.Conv2d(c_, c_, 1, 1, bias=False)
         self.conv4 = Conv(2 * c_, out_channels, 1, 1)
         self.bn = nn.BatchNorm2d(2 * c_)  # applied to cat(cv2, cv3)
-        self.act = nn.SiLU()
+        self.act = get_activation('silu', inplace=True)
         self.m = nn.Sequential(*(Bottleneck(c_, c_, group, expansion=1.0, shortcut=shortcut) for _ in range(numbers)))
 
     def forward(self, x):
@@ -201,7 +219,7 @@ class SPPF(nn.Module):
             warnings.simplefilter('ignore')  # suppress torch 1.9.0 max_pool2d() warning
             y1 = self.max_pool(x)
             y2 = self.max_pool(y1)
-            return self.cv2(torch.cat((x, y1, y2, self.max_pool(y2)), 1))
+            return self.conv2(torch.cat((x, y1, y2, self.max_pool(y2)), 1))
 
 
 class Focus(nn.Module):
