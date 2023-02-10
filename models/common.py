@@ -57,7 +57,7 @@ class Conv(nn.Module):
 
 class DWConv(Conv):
     # Depth-wise convolution
-    def __init__(self, in_channels, out_channels, ksize=1, stride=1, dilation=1, act=True):
+    def __init__(self, in_channels, out_channels, ksize=1, stride=1, dilation=1, act='selu'):
         super().__init__(in_channels, out_channels, ksize, stride, group=math.gcd(in_channels, out_channels),
                          dilation=dilation, act=act)
 
@@ -107,11 +107,11 @@ class TransformerBlock(nn.Module):
 
 class Bottleneck(nn.Module):
     # Standard bottleneck
-    def __init__(self, in_channels, out_channels, group=1, expansion=0.5, shortcut=True):
+    def __init__(self, in_channels, out_channels, group=1, expansion=0.5, shortcut=True, act='silu'):
         super().__init__()
         c_ = int(out_channels * expansion)  # hidden channels
-        self.conv1 = Conv(in_channels, c_, 1, 1)
-        self.conv2 = Conv(c_, out_channels, 3, 1, group=group)
+        self.conv1 = Conv(in_channels, c_, 1, 1, act=act)
+        self.conv2 = Conv(c_, out_channels, 3, 1, group=group, act=act)
         self.add = shortcut and in_channels == out_channels
 
     def forward(self, x):
@@ -139,11 +139,11 @@ class BottleneckCSP(nn.Module):
 
 class CrossConv(nn.Module):
     # Cross Convolution Downsample decomposition factorization
-    def __init__(self, in_channels, out_channels, ksize=3, stride=1, group=1, expansion=1.0, shortcut=False):
+    def __init__(self, in_channels, out_channels, ksize=3, stride=1, group=1, expansion=1.0, shortcut=False, act='silu'):
         super().__init__()
         c_ = int(out_channels * expansion)  # hidden channels
-        self.conv1 = Conv(in_channels, c_, (1, ksize), (1, stride))
-        self.conv2 = Conv(c_, out_channels, (ksize, 1), (stride, 1), group=group)
+        self.conv1 = Conv(in_channels, c_, (1, ksize), (1, stride), act=act)
+        self.conv2 = Conv(c_, out_channels, (ksize, 1), (stride, 1), group=group, act=act)
         self.add = shortcut and in_channels == out_channels
 
     def forward(self, x):
@@ -152,13 +152,13 @@ class CrossConv(nn.Module):
 
 class C3(nn.Module):
     # CSP Bottleneck with 3 convolutions
-    def __init__(self, in_channels, out_channels, group=1, expansion=0.5, number=1, shortcut=True):
+    def __init__(self, in_channels, out_channels, group=1, expansion=0.5, number=1, shortcut=True, act='silu'):
         super().__init__()
         c_ = int(out_channels * expansion)  # hidden channels
-        self.conv1 = Conv(in_channels, c_, 1, 1)
-        self.conv2 = Conv(in_channels, c_, 1, 1)
-        self.conv3 = Conv(2 * c_, out_channels, 1)  # optional act=FReLU(c2)
-        self.m = nn.Sequential(*(Bottleneck(c_, c_, group, expansion=1.0, shortcut=shortcut) for _ in range(number)))
+        self.conv1 = Conv(in_channels, c_, 1, 1, act=act)
+        self.conv2 = Conv(in_channels, c_, 1, 1, act=act)
+        self.conv3 = Conv(2 * c_, out_channels, 1, act=act)  # optional act=FReLU(c2)
+        self.m = nn.Sequential(*(Bottleneck(c_, c_, group, expansion=1.0, shortcut=shortcut, act=act) for _ in range(number)))
 
     def forward(self, x):
         return self.conv3(torch.cat((self.m(self.conv1(x)), self.conv2(x)), 1))
@@ -166,10 +166,10 @@ class C3(nn.Module):
 
 class C3x(C3):
     # C3 module with cross-convolutions
-    def __init__(self, in_channels, out_channels, group=1, expansion=0.5, number=1, shortcut=True):
+    def __init__(self, in_channels, out_channels, group=1, expansion=0.5, number=1, shortcut=True, act='silu'):
         super().__init__(in_channels, out_channels, group, expansion, number, shortcut)
         c_ = int(out_channels * expansion)
-        self.m = nn.Sequential(*(CrossConv(c_, c_, 3, 1, group, 1.0, shortcut) for _ in range(number)))
+        self.m = nn.Sequential(*(CrossConv(c_, c_, 3, 1, group, 1.0, shortcut=shortcut, act=act) for _ in range(number)))
 
 
 class C3TR(C3):
@@ -182,7 +182,8 @@ class C3TR(C3):
 
 class C3SPP(C3):
     # C3 module with SPP()
-    def __init__(self, in_channels, out_channels, ksize=(5, 9, 13), group=1, expansion=0.5, number=1, shortcut=True):
+    def __init__(self, in_channels, out_channels, ksize=(5, 9, 13), group=1, expansion=0.5, number=1, shortcut=True,
+                 act='silu'):
         super().__init__(in_channels, out_channels, group, expansion, number, shortcut)
         c_ = int(out_channels * expansion)
         self.m = SPP(c_, c_, ksize)
@@ -190,11 +191,11 @@ class C3SPP(C3):
 
 class SPP(nn.Module):
     # Spatial Pyramid Pooling (SPP) layer https://arxiv.org/abs/1406.4729
-    def __init__(self, in_channels, out_channels, ksize=(5, 9, 13)):
+    def __init__(self, in_channels, out_channels, ksize=(5, 9, 13), act='silu'):
         super().__init__()
         c_ = in_channels // 2  # hidden channels
-        self.conv1 = Conv(in_channels, c_, 1, 1)
-        self.con2 = Conv(c_ * (len(ksize) + 1), out_channels, 1, 1)
+        self.conv1 = Conv(in_channels, c_, 1, 1, act=act)
+        self.con2 = Conv(c_ * (len(ksize) + 1), out_channels, 1, 1, act=act)
         self.m = nn.ModuleList([nn.MaxPool2d(kernel_size=x, stride=1, padding=x // 2) for x in ksize])
 
     def forward(self, x):
@@ -206,11 +207,11 @@ class SPP(nn.Module):
 
 class SPPF(nn.Module):
     # Spatial Pyramid Pooling - Fast (SPPF) layer for YOLOv5 by Glenn Jocher
-    def __init__(self, in_channels, out_channels, ksize=5):  # equivalent to SPP(k=(5, 9, 13))
+    def __init__(self, in_channels, out_channels, ksize=5, act='silu'):  # equivalent to SPP(k=(5, 9, 13))
         super().__init__()
         c_ = in_channels // 2  # hidden channels
-        self.conv1 = Conv(in_channels, c_, 1, 1)
-        self.conv2 = Conv(c_ * 4, out_channels, 1, 1)
+        self.conv1 = Conv(in_channels, c_, 1, 1, act=act)
+        self.conv2 = Conv(c_ * 4, out_channels, 1, 1, act=act)
         self.max_pool = nn.MaxPool2d(kernel_size=ksize, stride=1, padding=ksize // 2)
 
     def forward(self, x):
@@ -224,7 +225,7 @@ class SPPF(nn.Module):
 
 class Focus(nn.Module):
     # Focus wh information into c-space
-    def __init__(self, in_channels, out_channels, ksize=1, stride=1, padding=None, group=1, act=True):  # ch_in, ch_out, kernel, stride, padding, groups
+    def __init__(self, in_channels, out_channels, ksize=1, stride=1, padding=None, group=1, act='silu'):  # ch_in, ch_out, kernel, stride, padding, groups
         super().__init__()
         self.conv = Conv(in_channels * 4, out_channels, ksize, stride, padding, group, act=act)
         # self.contract = Contract(gain=2)
