@@ -14,12 +14,12 @@ class DarkNet(nn.Module):
 class CSPDarknet(nn.Module):
     """
     width_mul: layer channel multiple
-    depth_mul:
+    depth_mul: model depth multiple
     """
     def __init__(
         self,
-        width_mul=1.0,  # 0.5
-        depth_mul=1.0,  # 0.33
+        width_mul=1.0,
+        depth_mul=1.0,
         out_features=("dark3", "dark4", "dark5"),
         act="silu",
     ):
@@ -31,9 +31,10 @@ class CSPDarknet(nn.Module):
         base_channels = int(width_mul * 64)  # 64
         base_depth = max(round(depth_mul * 3), 1)  # 3
 
+        # P1 320 x 320
         self.stem = Conv(in_channels=3, out_channels=base_channels, ksize=6, padding=2, stride=2, act=act)
 
-        # p2
+        # p2 160 x 160
         self.dark2 = nn.Sequential(
             Conv(in_channels=base_channels, out_channels=base_channels * 2, ksize=3, padding=1, stride=2, act=act),
             C3(in_channels=base_channels * 2,
@@ -41,7 +42,7 @@ class CSPDarknet(nn.Module):
                number=base_depth)
         )
 
-        # p3
+        # p3 80 x 80
         self.dark3 = nn.Sequential(
             Conv(in_channels=base_channels * 2, out_channels=base_channels * 4, ksize=3, padding=1, stride=2, act=act),
             C3(in_channels=base_channels * 4,
@@ -49,7 +50,7 @@ class CSPDarknet(nn.Module):
                number=base_depth * 2)
         )
 
-        # p4
+        # p4 40 x 40
         self.dark4 = nn.Sequential(
             Conv(in_channels=base_channels * 4, out_channels=base_channels * 8, ksize=3, padding=1, stride=2, act=act),
             C3(in_channels=base_channels * 8,
@@ -57,7 +58,7 @@ class CSPDarknet(nn.Module):
                number=base_depth * 3)
         )
 
-        # p5
+        # p5 20 x 20
         self.dark5 = nn.Sequential(
             Conv(in_channels=base_channels * 8, out_channels=base_channels * 16, ksize=3, padding=1, stride=2, act=act),
             C3(in_channels=base_channels * 16,
@@ -78,20 +79,22 @@ class CSPDarknet(nn.Module):
         outputs["dark4"] = x
         out = self.dark5(x)
         outputs["dark5"] = out
-        # return {k: v for k, v in outputs.items() if k in self.out_features}
 
-        return out
+        return {k: v for k, v in outputs.items() if k in self.out_features}
 
 
 if  __name__ == "__main__":
 
     dummy_input = torch.randn(1, 3, 640, 640)
 
+    # yolov5-l
+    # model = CSPDarknet(width_mul=1.0, depth_mul=1.0)
     # yolov5-s
     model = CSPDarknet(width_mul=0.5, depth_mul=0.33)
-
     out = model(dummy_input)
-    print(out.shape)
+
+    for name, m in out.items():
+        print(f'{name}: {m.shape}')
 
 
 
