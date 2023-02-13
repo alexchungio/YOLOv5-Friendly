@@ -1,5 +1,9 @@
 # yolov5-p5-middle
 
+backbone: CSPDarknet
+neck: PAFPN
+head: YOLOHead
+
 num_classes: 80  # number of classes
 depth_multiple: 0.67  # model depth multiple
 width_multiple: 0.75  # layer channel multiple
@@ -7,3 +11,8 @@ anchors:
   - [10,13, 16,30, 33,23]  # P3/8
   - [30,61, 62,45, 59,119]  # P4/16
   - [116,90, 156,198, 373,326]  # P5/32
+stride: [8, 16, 32]
+out_features: ["dark3", "dark4", "dark5"]
+out_channels: [256, 512, 1024]
+
+activate: silu
