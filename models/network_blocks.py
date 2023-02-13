@@ -129,10 +129,10 @@ class BottleneckCSP(nn.Module):
         self.conv4 = Conv(2 * c_, out_channels, 1, 1)
         self.bn = nn.BatchNorm2d(2 * c_)  # applied to cat(cv2, cv3)
         self.act = get_activation('silu', inplace=True)
-        self.m = nn.Sequential(*(Bottleneck(c_, c_, group, expansion=1.0, shortcut=shortcut) for _ in range(numbers)))
+        self.blocks = nn.Sequential(*(Bottleneck(c_, c_, group, expansion=1.0, shortcut=shortcut) for _ in range(numbers)))
 
     def forward(self, x):
-        y1 = self.conv3(self.m(self.conv1(x)))
+        y1 = self.conv3(self.blocks(self.conv1(x)))
         y2 = self.conv2(x)
         return self.conv4(self.act(self.bn(torch.cat((y1, y2), 1))))
 
@@ -158,10 +158,10 @@ class C3(nn.Module):
         self.conv1 = Conv(in_channels, c_, 1, 1, act=act)
         self.conv2 = Conv(in_channels, c_, 1, 1, act=act)
         self.conv3 = Conv(2 * c_, out_channels, 1, act=act)  # optional act=FReLU(c2)
-        self.m = nn.Sequential(*(Bottleneck(c_, c_, group, expansion=1.0, shortcut=shortcut, act=act) for _ in range(number)))
+        self.blocks = nn.Sequential(*(Bottleneck(c_, c_, group, expansion=1.0, shortcut=shortcut, act=act) for _ in range(number)))
 
     def forward(self, x):
-        return self.conv3(torch.cat((self.m(self.conv1(x)), self.conv2(x)), 1))
+        return self.conv3(torch.cat((self.blocks(self.conv1(x)), self.conv2(x)), 1))
 
 
 class C3x(C3):
@@ -169,7 +169,7 @@ class C3x(C3):
     def __init__(self, in_channels, out_channels, group=1, expansion=0.5, number=1, shortcut=True, act='silu'):
         super().__init__(in_channels, out_channels, group, expansion, number, shortcut)
         c_ = int(out_channels * expansion)
-        self.m = nn.Sequential(*(CrossConv(c_, c_, 3, 1, group, 1.0, shortcut=shortcut, act=act) for _ in range(number)))
+        self.blocks = nn.Sequential(*(CrossConv(c_, c_, 3, 1, group, 1.0, shortcut=shortcut, act=act) for _ in range(number)))
 
 
 class C3TR(C3):
@@ -177,7 +177,7 @@ class C3TR(C3):
     def __init__(self, in_channels, out_channels, group=1, expansion=0.5, number=1, shortcut=True):
         super().__init__(in_channels, out_channels, group, expansion, number, shortcut)
         c_ = int(out_channels * expansion)
-        self.m = TransformerBlock(c_, c_, num_heads=4, num_layers=number)
+        self.blocks = TransformerBlock(c_, c_, num_heads=4, num_layers=number)
 
 
 class C3SPP(C3):
@@ -186,7 +186,7 @@ class C3SPP(C3):
                  act='silu'):
         super().__init__(in_channels, out_channels, group, expansion, number, shortcut)
         c_ = int(out_channels * expansion)
-        self.m = SPP(c_, c_, ksize)
+        self.blocks = SPP(c_, c_, ksize)
 
 
 class SPP(nn.Module):
@@ -196,13 +196,13 @@ class SPP(nn.Module):
         c_ = in_channels // 2  # hidden channels
         self.conv1 = Conv(in_channels, c_, 1, 1, act=act)
         self.con2 = Conv(c_ * (len(ksize) + 1), out_channels, 1, 1, act=act)
-        self.m = nn.ModuleList([nn.MaxPool2d(kernel_size=x, stride=1, padding=x // 2) for x in ksize])
+        self.blocks = nn.ModuleList([nn.MaxPool2d(kernel_size=x, stride=1, padding=x // 2) for x in ksize])
 
     def forward(self, x):
         x = self.conv1(x)
         with warnings.catch_warnings():
             warnings.simplefilter('ignore')  # suppress torch 1.9.0 max_pool2d() warning
-            return self.conv2(torch.cat([x] + [m(x) for m in self.m], 1))
+            return self.conv2(torch.cat([x] + [m(x) for m in self.blocks], 1))
 
 
 class SPPF(nn.Module):

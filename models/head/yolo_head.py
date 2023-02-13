@@ -28,7 +28,7 @@ class YOLOHead(nn.Module):
         self.anchor_grid = [torch.empty(0) for _ in range(self.num_layers)]  # init anchor grid
         self.register_buffer('anchors', torch.tensor(anchors).float().view(self.num_layers, -1, 2))
         # output head
-        self.m = nn.ModuleList(Conv(int(feature_channels[i] * width_mul), self.output_channels, 1, act=act)
+        self.blocks = nn.ModuleList(Conv(int(feature_channels[i] * width_mul), self.output_channels, 1, act=act)
                                for i in range(self.num_layers))
         self.inplace = inplace
         self.export = export
@@ -37,7 +37,7 @@ class YOLOHead(nn.Module):
         out = []
         # infer differ scale layer
         for i in range(self.num_layers):
-            x[i] = self.m[i](x[i])
+            x[i] = self.blocks[i](x[i])
             # x(bs, 255, -, -) to x(bs, 3, -, -, 85)
             batch_size, _, num_y, num_x = x[i].shape
             x[i] = x[i].view(batch_size,

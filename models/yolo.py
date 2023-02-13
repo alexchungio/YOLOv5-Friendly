@@ -31,7 +31,7 @@ class YOLO(nn.Module):
         num_classes = config.get('num_classes', 80)
         anchors = config.get('anchors')
         width_mul = config.get('width_multiple', 1.0)
-        depth_mul = config.get('width_multiple', 1.0)
+        depth_mul = config.get('depth_multiple', 1.0)
         stride = config.get('stride', (8, 16, 32))
         out_features = config.get('out_features', ('dark3', 'dark4', 'dark5'))
         out_channels = config.get('out_channels', (256, 512, 1024))
@@ -79,3 +79,7 @@ if __name__ == "__main__":
     model.eval()
     out = model(dummy_input)
     print(out[0].shape)
+
+    for name, module in model.named_modules():
+        if isinstance(module, nn.Conv2d):
+            print(name)
