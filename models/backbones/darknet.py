@@ -2,7 +2,7 @@
 import torch
 import torch.nn as nn
 
-from models.common import Conv, C3, SPPF
+from models.network_blocks import Conv, C3, SPPF
 
 __all__ = ['CSPDarknet']
 
@@ -99,9 +99,6 @@ if __name__ == "__main__":
 
     [print(f'{name}: {m.shape}') for name, m in out.items()]
 
-
-
-
-
-
-
+    print(model.training)
+    model.eval()
+    print(model.training)

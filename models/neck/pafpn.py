@@ -1,6 +1,6 @@
 import torch
 import torch.nn as nn
-from models.common import Conv, C3
+from models.network_blocks import Conv, C3
 
 __all__ = ['PAFPN']
 
