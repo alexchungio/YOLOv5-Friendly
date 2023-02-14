@@ -26,10 +26,10 @@ class YOLOHead(nn.Module):
         self.stride = stride
         self.grid = [torch.empty(0) for _ in range(self.num_layers)]  # init grid
         self.anchor_grid = [torch.empty(0) for _ in range(self.num_layers)]  # init anchor grid
-        self.register_buffer('anchors', torch.tensor(anchors).float().view(self.num_layers, -1, 2))
+        self.anchors = self._gen_anchors(anchors)
         # output head
-        self.blocks = nn.ModuleList(Conv(int(feature_channels[i] * width_mul), self.output_channels, 1, act=act)
-                               for i in range(self.num_layers))
+        self.blocks = nn.ModuleList(nn.Conv2d(int(feature_channels[i] * width_mul), self.output_channels, 1)
+                                    for i in range(self.num_layers))
         self.inplace = inplace
         self.export = export
         
@@ -59,16 +59,22 @@ class YOLOHead(nn.Module):
 
         return tuple(x) if self.training else (torch.cat(out, 1),) if self.export else (torch.cat(out, 1), x)
 
-    def _make_grid(self, num_x, num_y, i=0):
+    def _make_grid(self, num_x=20, num_y=20, i=0):
         device = self.anchors[i].device
         type = self.anchors[i].dtype
         shape = 1, self.num_anchor, num_y, num_x, 2  # grid shape
         y, x = torch.arange(num_y, device=device, dtype=type), torch.arange(num_x, device=device, dtype=type)
         y_grid, x_grid = torch.meshgrid(y, x)
-        grid = torch.stack((y_grid, x_grid), 2).expand(shape) - 0.5  # add grid offset, y = 2.0 * x - 0.5
+        grid = torch.stack((x_grid, y_grid), 2).expand(shape) - 0.5  # add grid offset, y = 2.0 * x - 0.5
         anchor_grid = (self.anchors[i] * self.stride[i]).view((1, self.num_anchor, 1, 1, 2)).expand(shape)
 
         return grid, anchor_grid
+
+    def _gen_anchors(self, anchors):
+        anchors = torch.tensor(anchors).float().view(self.num_layers, -1, 2)
+        anchors /= torch.tensor(self.stride).view(-1, 1, 1)
+
+        return anchors
 
 
 if __name__ == "__main__":
