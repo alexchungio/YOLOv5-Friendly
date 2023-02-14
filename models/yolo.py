@@ -5,16 +5,16 @@ import torch.nn as nn
 from models.backbones import *
 from models.neck import *
 from models.head import *
+from utils.general import yaml_load
+
 
 __all__ = ['YOLO']
 
 
 class YOLO(nn.Module):
-    def __init__(self, config:str, export=False):
+    def __init__(self, config: dict, export=False):
         super().__init__()
-
-        self.config = self.parse_yaml(config)
-        self.backbone, self.neck, self.head = self.build_network(self.config)
+        self.backbone, self.neck, self.head = self.build_network(config, export=export)
 
     def forward(self, x):
         x = self.backbone(x)
@@ -58,16 +58,13 @@ class YOLO(nn.Module):
 
         return backbone, neck, head
 
-    def parse_yaml(self, yaml_file):
-
-        f = open(yaml_file, encoding='ascii')
-
-        return yaml.safe_load(f)
-
 
 if __name__ == "__main__":
-    config = '/Users/alex/Documents/code/YOLOv5-Friendly/config/yolov5s_p5.yaml'
-    model = YOLO(config)
+    config = '/Users/alex/Documents/code/YOLOv5-Friendly/config/model/yolov5s_p5.yaml'
+    ckpt_path = '/Users/alex/Documents/code/YOLOv5-Friendly/weights/yolov5s_friendly.pt'
+
+    model_config = yaml_load(config)
+    model = YOLO(model_config)
 
     # training
     dummy_input = torch.randn(1, 3, 640, 640)
@@ -80,6 +77,12 @@ if __name__ == "__main__":
     out = model(dummy_input)
     print(out[0].shape)
 
-    for name, module in model.named_modules():
-        if isinstance(module, nn.Conv2d):
-            print(name)
+    # load state_dict
+    state_dict = torch.load(ckpt_path)['state_dict']
+    model.load_state_dict(state_dict, strict=True)
+    pass
+
+    # print module
+    # for name, module in model.named_modules():
+    #     if isinstance(module, nn.Conv2d):
+    #         print(name)
