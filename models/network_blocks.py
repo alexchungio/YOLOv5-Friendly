@@ -45,7 +45,7 @@ class Conv(nn.Module):
         super().__init__()
         self.conv = nn.Conv2d(in_channels, out_channels, ksize, stride, autopad(ksize, padding, dilation),
                               groups=group, dilation=dilation, bias=False)
-        self.bn = nn.BatchNorm2d(out_channels)
+        self.bn = nn.BatchNorm2d(out_channels, eps=0.001, momentum=0.03)
         self.act = get_activation(act, inplace=True) if act else nn.Identity()
 
     def forward(self, x):
