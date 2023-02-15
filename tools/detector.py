@@ -82,8 +82,8 @@ def run(
     # load state_dict
     # state_dict = model.state_dict()
     model.fp16 = half
-    # model.fuse().eval()
-    model.eval()
+    model.fuse().eval()
+    # model.eval()
     # state_dict_fuse = model.state_dict()
 
     stride = max(max(model_cfg['stride']), 32)  # max stride
