@@ -2,7 +2,6 @@
 """
 PyTorch utils
 """
-
 import math
 import os
 import platform
@@ -12,6 +11,7 @@ import warnings
 from contextlib import contextmanager
 from copy import deepcopy
 from pathlib import Path
+import numpy as np
 
 import torch
 import torch.distributed as dist
@@ -344,6 +344,10 @@ def smart_optimizer(model, name='Adam', lr=0.001, momentum=0.9, decay=1e-5):
     LOGGER.info(f"{colorstr('optimizer:')} {type(optimizer).__name__}(lr={lr}) with parameter groups "
                 f"{len(g[1])} weight(decay=0.0), {len(g[0])} weight(decay={decay}), {len(g[2])} bias")
     return optimizer
+
+
+def from_numpy(x, device):
+    return torch.from_numpy(x).to(device) if isinstance(x, np.ndarray) else x
 
 
 def smart_hub_load(repo='ultralytics/yolov5', model='yolov5s', **kwargs):

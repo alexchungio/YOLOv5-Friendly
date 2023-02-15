@@ -1,6 +1,8 @@
 
+import numpy as np
 import torch
 import torch.nn as nn
+
 
 from models.network_blocks import Conv, DWConv
 from models import YOLO
@@ -16,8 +18,10 @@ class BaseModel(nn.Module):
         self.visualze = visualize
 
     # YOLOv5 base model
-    def forward(self, x):
-        return self._forward_once(x)  # single-scale inference, train
+    def forward(self, x, augment=False, profile=False, visualize=False):
+        if augment:
+            pass
+        return self._forward_once(x, profile=profile, visualize=visualize)  # single-scale inference, train
 
     def _forward_once(self, x, profile=False, visualize=False):
 
@@ -70,5 +74,11 @@ class DetectorModel(BaseModel):
         self.model.load_state_dict(state_dict, strict=True)
         print(f'Successful load state dict from {self.ckpt_path}')
 
-
-
+    def warmup(self, img_size=(1, 3, 640, 640)):
+        """
+        Warmup model by running inference once
+        :param img_size:
+        :return:
+        """
+        img = torch.empty(*img_size, dtype=torch.half if self.fp16 else torch.float, device=self.device)  # input
+        self.forward(img)

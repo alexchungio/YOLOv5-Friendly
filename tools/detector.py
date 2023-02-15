@@ -13,17 +13,13 @@ from utils.general import (LOGGER, Profile, check_file, check_img_size, check_im
                            increment_path, non_max_suppression, print_args, scale_boxes, strip_optimizer, xyxy2xywh,
                            yaml_load)
 from utils.plots import Annotator, colors, save_one_box
-from utils.torch_utils import select_device, smart_inference_mode
+from utils.torch_utils import select_device, smart_inference_mode, from_numpy
 
 FILE = Path(__file__).resolve()
 ROOT = FILE.parent.parent # YOLOv5 root directory
 if str(ROOT) not in sys.path:
     sys.path.append(str(ROOT))  # add ROOT to PATH
 # ROOT = Path(os.path.relpath(ROOT, Path.cwd()))  # relative
-
-
-def from_numpy(x, device):
-    return torch.from_numpy(x).to(device) if isinstance(x, np.ndarray) else x
 
 
 @smart_inference_mode()
@@ -79,12 +75,9 @@ def run(
     model_cfg = yaml_load(model_cfg)
     data_cfg = yaml_load(data_cfg)
     model = DetectorModel(model_cfg, ckpt_path=weights)
-    # load state_dict
-    # state_dict = model.state_dict()
     model.fp16 = half
+    model.device = device
     model.fuse().eval()
-    # model.eval()
-    # state_dict_fuse = model.state_dict()
 
     stride = max(max(model_cfg['stride']), 32)  # max stride
     names = data_cfg['names']  # names
@@ -105,8 +98,7 @@ def run(
     vid_path, vid_writer = [None] * batch_size, [None] * batch_size
 
     # Run inference
-    # model.warmup(imgsz=(1 if pt else batch_size, 3, *img_size))  # warmup
-
+    model.warmup(img_size=(1 if pt else batch_size, 3, *img_size))  # warmup
     seen, windows, dt = 0, [], (Profile(), Profile(), Profile())
     for path, img_tensor, img_origin, vid_cap, s in dataset:
         with dt[0]:
@@ -119,11 +111,7 @@ def run(
         # Inference
         with dt[1]:
             visualize = increment_path(save_dir / Path(path).stem, mkdir=True) if visualize else False
-            # pred = model(img_tensor, augment=augment, visualize=visualize)
-            state_dict = model.state_dict()
-            # img_tensor = torch.ones_like(img_tensor)
-            pred = model(img_tensor)
-
+            pred = model(img_tensor, augment=augment, visualize=visualize)
             if isinstance(pred, (list, tuple)):
                 pred = from_numpy(pred[0], device) if len(pred) == 1 else [from_numpy(x, device) for x in pred]
             else:
@@ -201,7 +189,7 @@ def run(
                             fps, w, h = 30, img.shape[1], img.shape[0]
                         save_path = str(Path(save_path).with_suffix('.mp4'))  # force *.mp4 suffix on results videos
                         vid_writer[i] = cv2.VideoWriter(save_path, cv2.VideoWriter_fourcc(*'mp4v'), fps, (w, h))
-                    vid_writer[i].write(im0)
+                    vid_writer[i].write(img)
 
         # Print time (inference-only)
         LOGGER.info(f"{s}{'' if len(det) else '(no detections), '}{dt[1].dt * 1E3:.1f}ms")
