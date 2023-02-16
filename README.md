@@ -13,8 +13,12 @@ python tools/model_convert/yolov5_fo_friendly.py --src yolov5s.pt --dst yolov5s_
 ```commandline
 python tools/detector.py
 ```
-### result(yolov5s_friendly)
-![chair](output/detect/exp/chair.jpg)[zidane](output/detect/exp/zidane.jpg)
+### show result(with yolov5s_friendly)
+
+<div align="center">
+    <img src=output/detect/exp/chair.jpg alt="chair" width="800"/>
+    <img src=output/detect/exp/zidane.jpg alt="zidane" width="800"/>
+</div>
 
 ## Log
 ### the official release code and the model not alignment
