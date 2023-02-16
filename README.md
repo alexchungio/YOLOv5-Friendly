@@ -5,9 +5,9 @@ Implement a friendly version of YOLOv5 by reconstruct [ultralytics/yolov5](https
 ## model convert
 * install yolov5 repo [ultralytics/yolov5](https://github.com/ultralytics/yolov5)
 * install yolov5 office model from [ultralytics/yolov5](https://github.com/ultralytics/yolov5)
-* execute yolov5_fo_friendly.py under the ultralytics/yolov5 repo
+* execute yolov5_to_friendly.py under the ultralytics/yolov5 repo
 ```commandline
-python tools/model_convert/yolov5_fo_friendly.py --src yolov5s.pt --dst yolov5s_friendly.pt
+python tools/model_convert/yolov5_to_friendly.py --src yolov5s.pt --dst yolov5s_friendly.pt
 ```
 ## inference
 ```commandline
