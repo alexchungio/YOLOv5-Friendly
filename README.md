@@ -33,6 +33,8 @@ python tools/detector.py
 ## Log
 ### the official release code and the model not alignment
 * adjust BN default param: `eps=0.001`, `momentum=0.03`
+### training do not use ImageNet pretrained model
+*all of our models are trained from scratch on COCO. We do not have any ImageNet trained models @glenn-jocher.*[reference](https://github.com/ultralytics/yolov5/issues/5422)
 
 ## TODO
 - [ ] train
