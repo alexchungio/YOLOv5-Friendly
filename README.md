@@ -20,6 +20,16 @@ python tools/detector.py
     <img src=output/detect/exp/zidane.jpg alt="zidane" width="800"/>
 </div>
 
+### Model and Result
+
+| Model                                                                                                                | size<br><sup>(pixels) | mAP<sup>val<br>50-95 | mAP<sup>val<br>50 | params<br><sup>(M) | FLOPs<br><sup>@640 (B) |
+|----------------------------------------------------------------------------------------------------------------------|-----------------------|----------------------|-------------------|--------------------|------------------------|
+| [YOLOv5n_friendly](https://github.com/alexchungio/YOLOv5-Friendly/releases/download/v0.1.0-beta/yolov5n_friendly.pt) | 640                   | 28.0                 | 45.7              | **1.9**            | **4.5**                |
+| [YOLOv5s_friendly](https://github.com/alexchungio/YOLOv5-Friendly/releases/download/v0.1.0-beta/yolov5s_friendly.pt) | 640                   | 37.4                 | 56.8              | 7.2                | 16.5                   |
+| [YOLOv5m_friendly](https://github.com/alexchungio/YOLOv5-Friendly/releases/download/v0.1.0-beta/yolov5m_friendly.pt) | 640                   | 45.4                 | 64.1              | 21.2               | 49.0                   |
+| [YOLOv5l_friendly](https://github.com/alexchungio/YOLOv5-Friendly/releases/download/v0.1.0-beta/yolov5l_friendly.pt) | 640                   | 49.0                 | 67.3              | 46.5               | 109.1                  |
+| [YOLOv5x_friendly](https://github.com/alexchungio/YOLOv5-Friendly/releases/download/v0.1.0-beta/yolov5x_friendly.pt) | 640                   | 50.7                 | 68.9              | 86.7               | 205.7                  |
+
 ## Log
 ### the official release code and the model not alignment
 * adjust BN default param: `eps=0.001`, `momentum=0.03`
