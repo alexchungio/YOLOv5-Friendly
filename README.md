@@ -22,13 +22,13 @@ python tools/detector.py
 
 ### Model and Result
 
-| Model                                                                                                                | size<br><sup>(pixels) | mAP<sup>val<br>50-95 | mAP<sup>val<br>50 | params<br><sup>(M) | FLOPs<br><sup>@640 (B) |
-|----------------------------------------------------------------------------------------------------------------------|-----------------------|----------------------|-------------------|--------------------|------------------------|
-| [YOLOv5n_friendly](https://github.com/alexchungio/YOLOv5-Friendly/releases/download/v0.1.0-beta/yolov5n_friendly.pt) | 640                   | 28.0                 | 45.7              | **1.9**            | **4.5**                |
-| [YOLOv5s_friendly](https://github.com/alexchungio/YOLOv5-Friendly/releases/download/v0.1.0-beta/yolov5s_friendly.pt) | 640                   | 37.4                 | 56.8              | 7.2                | 16.5                   |
-| [YOLOv5m_friendly](https://github.com/alexchungio/YOLOv5-Friendly/releases/download/v0.1.0-beta/yolov5m_friendly.pt) | 640                   | 45.4                 | 64.1              | 21.2               | 49.0                   |
-| [YOLOv5l_friendly](https://github.com/alexchungio/YOLOv5-Friendly/releases/download/v0.1.0-beta/yolov5l_friendly.pt) | 640                   | 49.0                 | 67.3              | 46.5               | 109.1                  |
-| [YOLOv5x_friendly](https://github.com/alexchungio/YOLOv5-Friendly/releases/download/v0.1.0-beta/yolov5x_friendly.pt) | 640                   | 50.7                 | 68.9              | 86.7               | 205.7                  |
+| Model            | size<br><sup>(pixels) | mAP<sup>val<br>50-95 | mAP<sup>val<br>50 | params<br><sup>(M) | FLOPs<br><sup>@640 (B) | Config                                 | Checkpoint                                                                                                   |
+|------------------|-----------------------|----------------------|-------------------|--------------------|------------------------|----------------------------------------|--------------------------------------------------------------------------------------------------------------|
+| YOLOv5n_friendly | 640                   | 28.0                 | 45.7              | **1.9**            | **4.5**                | [config](config/model/yolov5n_p5.yaml) | [download](https://github.com/alexchungio/YOLOv5-Friendly/releases/download/v0.1.0-beta/yolov5n_friendly.pt) |
+| YOLOv5s_friendly | 640                   | 37.4                 | 56.8              | 7.2                | 16.5                   | [config](config/model/yolov5s_p5.yaml) | [download](https://github.com/alexchungio/YOLOv5-Friendly/releases/download/v0.1.0-beta/yolov5s_friendly.pt) |
+| YOLOv5m_friendly | 640                   | 45.4                 | 64.1              | 21.2               | 49.0                   | [config](config/model/yolov5m_p5.yaml) | [download](https://github.com/alexchungio/YOLOv5-Friendly/releases/download/v0.1.0-beta/yolov5m_friendly.pt) |
+| YOLOv5l_friendly | 640                   | 49.0                 | 67.3              | 46.5               | 109.1                  | [config](config/model/yolov5l_p5.yaml) | [download](https://github.com/alexchungio/YOLOv5-Friendly/releases/download/v0.1.0-beta/yolov5l_friendly.pt) |
+| YOLOv5x_friendly | 640                   | 50.7                 | 68.9              | 86.7               | 205.7                  | [config](config/model/yolov5x_p5.yaml) | [download](https://github.com/alexchungio/YOLOv5-Friendly/releases/download/v0.1.0-beta/yolov5x_friendly.pt) |
 
 ## Log
 ### the official release code and the model not alignment
