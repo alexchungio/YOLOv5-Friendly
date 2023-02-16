@@ -25,8 +25,9 @@ python tools/detector.py
 * adjust BN default param: `eps=0.001`, `momentum=0.03`
 
 ## TODO
-* train
-* eval
+- [ ] train
+- [ ] eval
+- [ ] export
 
 ## References
 [1] https://github.com/open-mmlab/mmyolo
