@@ -20,7 +20,7 @@ python tools/detector.py
     <img src=output/detect/exp/zidane.jpg alt="zidane" width="800"/>
 </div>
 
-### Model and Result
+## Model and Result
 
 | Model            | size<br><sup>(pixels) | mAP<sup>val<br>50-95 | mAP<sup>val<br>50 | params<br><sup>(M) | FLOPs<br><sup>@640 (B) | Config                                 | Checkpoint                                                                                                   |
 |------------------|-----------------------|----------------------|-------------------|--------------------|------------------------|----------------------------------------|--------------------------------------------------------------------------------------------------------------|
