@@ -16,7 +16,7 @@ python tools/detector.py
 ### show result(with yolov5s_friendly)
 
 <div align="center">
-    <img src=output/detect/exp/chair.jpg alt="chair" width="800"/>
+    <img src=output/detect/exp/sand.jpg alt="sand" width="800"/>
     <img src=output/detect/exp/zidane.jpg alt="zidane" width="800"/>
 </div>
 
