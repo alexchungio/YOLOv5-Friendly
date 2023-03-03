@@ -20,6 +20,11 @@ python tools/detector.py
     <img src=output/detect/exp/zidane.jpg alt="zidane" width="800"/>
 </div>
 
+## export
+```commandline
+python tools/export.py
+```
+
 ## Model and Result
 
 | Model            | size<br><sup>(pixels) | mAP<sup>val<br>50-95 | mAP<sup>val<br>50 | params<br><sup>(M) | FLOPs<br><sup>@640 (B) | Config                                 | Checkpoint                                                                                                   |
@@ -30,6 +35,7 @@ python tools/detector.py
 | YOLOv5l_friendly | 640                   | 49.0                 | 67.3              | 46.5               | 109.1                  | [config](config/model/yolov5l_p5.yaml) | [download](https://github.com/alexchungio/YOLOv5-Friendly/releases/download/v0.1.0-beta/yolov5l_friendly.pt) |
 | YOLOv5x_friendly | 640                   | 50.7                 | 68.9              | 86.7               | 205.7                  | [config](config/model/yolov5x_p5.yaml) | [download](https://github.com/alexchungio/YOLOv5-Friendly/releases/download/v0.1.0-beta/yolov5x_friendly.pt) |
 
+
 ## Log
 ### the official release code and the model not alignment
 * adjust BN default param: `eps=0.001`, `momentum=0.03`
@@ -39,7 +45,7 @@ python tools/detector.py
 ## TODO
 - [ ] train
 - [ ] eval
-- [ ] export
+- [x] export
 
 ## References
 [1] https://github.com/open-mmlab/mmyolo
