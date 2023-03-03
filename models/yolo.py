@@ -2,9 +2,10 @@ import os
 import yaml
 import torch
 import torch.nn as nn
-from models.backbones import *
-from models.neck import *
-from models.head import *
+
+import models
+from models import backbones, neck, head
+
 from utils.general import yaml_load
 
 
@@ -24,9 +25,10 @@ class YOLO(nn.Module):
         return out
 
     def build_network(self, config, export=False):
-        BACKBONE = eval(config.get('backbone', 'CSPDarknet'))
-        NECK = eval(config.get('neck', 'PAFPN'))
-        HEAD = eval(config.get('head', 'YOLOHead'))
+
+        BACKBONE = models.backbones.__dict__[config.get('backbone', 'CSPDarknet')]
+        NECK = models.neck.__dict__[config.get('neck', 'PAFPN')]
+        HEAD = models.head.__dict__[config.get('head', 'YOLOHead')]
 
         num_classes = config.get('num_classes', 80)
         anchors = config.get('anchors')
