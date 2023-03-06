@@ -295,7 +295,7 @@ def parse_opt(known=False):
     parser.add_argument('--half', action='store_true', help='FP16 half-precision export')
     parser.add_argument('--inplace', action='store_true', default=True, help='set YOLOv5 Detect() inplace=True')
     parser.add_argument('--int8', action='store_true', default=True, help='CoreML/TF INT8 quantization')
-    parser.add_argument('--dynamic', action='store_true', default=True, help='ONNX/TF/TensorRT: dynamic axes')
+    parser.add_argument('--dynamic', action='store_true', default=False, help='ONNX/TF/TensorRT: dynamic axes')
     parser.add_argument('--simplify', action='store_true', default=True, help='ONNX: simplify model')
     parser.add_argument('--opset', type=int, default=11, help='ONNX: opset version')
     parser.add_argument('--verbose', action='store_true', help='TensorRT: verbose log')
