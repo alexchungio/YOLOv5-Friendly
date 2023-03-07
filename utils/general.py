@@ -515,7 +515,7 @@ def check_dataset(data, autodownload=True):
     if isinstance(data['names'], (list, tuple)):  # old array format
         data['names'] = dict(enumerate(data['names']))  # convert to dict
     assert all(isinstance(k, int) for k in data['names'].keys()), 'dataset.yaml names keys must be integers, i.e. 2: car'
-    data['nc'] = len(data['names'])
+    data['num_classes'] = len(data['names'])
 
     # Resolve paths
     path = Path(extract_dir or data.get('path') or '')  # optional 'path' default to '.'
