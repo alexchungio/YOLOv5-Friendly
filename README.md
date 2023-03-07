@@ -22,7 +22,7 @@ python tools/detector.py
 
 ## export
 ```commandline
-python tools/export.py
+python tools/export.py --inplace --simplify
 ```
 
 ## Model and Result
