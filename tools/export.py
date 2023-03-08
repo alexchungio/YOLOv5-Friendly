@@ -226,7 +226,8 @@ def run(
     if half:
         assert device.type != 'cpu' or coreml, '--half only compatible with GPU export, i.e. use --device 0'
         assert not dynamic, '--half not compatible with --dynamic, i.e. use either --half or --dynamic but not both'
-    model = DetectorModel(model_cfg, ckpt_path=ckpt_path, strict=True, export=True)
+    model = DetectorModel(model_cfg, export=True)
+    model.load_weight(str(weights), strict=True)
     model.fuse().eval()
     model.stride = model_cfg['stride']
     model.names = data_cfg['names']
