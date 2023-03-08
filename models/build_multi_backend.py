@@ -11,7 +11,7 @@ import torch.nn as nn
 from PIL import Image
 
 from.build import DetectorModel
-from utils.general import (LOGGER, ROOT, check_requirements, check_version, xywh2xyxy, yaml_load, load_weight)
+from utils.general import (LOGGER, ROOT, check_requirements, check_version, xywh2xyxy, yaml_load)
 
 
 __all__ = ['DetectMultiBackend']
@@ -40,8 +40,7 @@ class DetectMultiBackend(nn.Module):
         if pt:  # PyTorch
             model_cfg = yaml_load(model_cfg)
             data_cfg = yaml_load(data_cfg)
-            model = DetectorModel(model_cfg)
-            load_weight(model, weights, strict=True)
+            model = DetectorModel(model_cfg, weights, strict=True)
             model.num_classes = int(model_cfg['num_classes'])
             model.stride = max(max(model_cfg['stride']), stride)
             model.names = data_cfg['names']

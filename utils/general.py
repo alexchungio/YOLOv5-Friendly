@@ -600,7 +600,7 @@ def load_weight(model, ckpt_path, strict=True):
         assert os.path.exists(ckpt_path), f"{ckpt_path} do not exist"
         ckpt = torch.load(ckpt_path)
         state_dict = ckpt['state_dict'] if ckpt.get('state_dict') else ckpt
-        model.model.load_state_dict(state_dict, strict=strict)
+        model.load_state_dict(state_dict, strict=strict)
         LOGGER.info(f'Successful load state dict from {ckpt_path}')
     except Exception as e:
         LOGGER.warning(f'Failed load weight ❌, due to {str(e)}')
