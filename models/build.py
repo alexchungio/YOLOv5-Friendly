@@ -1,11 +1,12 @@
 
-import numpy as np
+import os
 import torch
 import torch.nn as nn
 
 
 from models.network_blocks import Conv, DWConv
 from models import YOLO
+from utils.general import load_weight
 
 
 __all__ = ['DetectorModel']
@@ -62,17 +63,11 @@ class BaseModel(nn.Module):
 
 
 class DetectorModel(BaseModel):
-    def __init__(self, config, ckpt_path, profile=False, visualize=False, export=False):
+    def __init__(self, config, ckpt_path=None, strict=True, profile=False, visualize=False, export=False):
         super().__init__(profile=profile, visualize=visualize)
-        self.ckpt_path = ckpt_path
         self.model = YOLO(config, export=export)
-        self.load_weights()
-
-    def load_weights(self):
-        ckpt = torch.load(self.ckpt_path)
-        state_dict = ckpt['state_dict'] if ckpt.get('state_dict') else ckpt
-        self.model.load_state_dict(state_dict, strict=True)
-        print(f'Successful load state dict from {self.ckpt_path}')
+        if ckpt_path:
+            load_weight(self.model, ckpt_path=ckpt_path, strict=strict)
 
     def warmup(self, img_size=(1, 3, 640, 640)):
         """

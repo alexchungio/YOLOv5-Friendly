@@ -563,7 +563,7 @@ def check_dataset(data, autodownload=True):
 
 def check_amp(model):
     # Check PyTorch Automatic Mixed Precision (AMP) functionality. Return True on correct operation
-    from models.common import AutoShape, DetectMultiBackend
+    from models import AutoShape, DetectMultiBackend
 
     def amp_allclose(model, im):
         # All close FP32 vs AMP results
@@ -593,6 +593,17 @@ def yaml_load(file='dataset.yaml'):
     # Single-line safe yaml loading
     with open(file, errors='ignore') as f:
         return yaml.safe_load(f)
+
+
+def load_weight(model, ckpt_path, strict=True):
+    try:
+        assert os.path.exists(ckpt_path), f"{ckpt_path} do not exist"
+        ckpt = torch.load(ckpt_path)
+        state_dict = ckpt['state_dict'] if ckpt.get('state_dict') else ckpt
+        model.model.load_state_dict(state_dict, strict=strict)
+        LOGGER.info(f'Successful load state dict from {ckpt_path}')
+    except Exception as e:
+        LOGGER.warning(f'Failed load weight ❌, due to {str(e)}')
 
 
 def yaml_save(file='dataset.yaml', data={}):
