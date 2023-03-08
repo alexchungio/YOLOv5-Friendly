@@ -7,7 +7,7 @@ import torch
 import numpy as np
 import cv2
 
-from models import DetectorModel
+from models import DetectMultiBackend
 from data.dataloaders import IMG_FORMATS, VID_FORMATS, LoadImages, LoadScreenshots, LoadStreams
 from utils.general import (LOGGER, Profile, check_file, check_img_size, check_imshow, check_requirements, colorstr,
                            increment_path, non_max_suppression, print_args, scale_boxes, strip_optimizer, xyxy2xywh,
@@ -72,16 +72,8 @@ def run(
 
     # Load model
     device = select_device(device)
-    model_cfg = yaml_load(model_cfg)
-    data_cfg = yaml_load(data_cfg)
-    model = DetectorModel(model_cfg, ckpt_path=weights)
-    model.fp16 = half
-    model.device = device
-    model.fuse().eval()
-
-    stride = max(max(model_cfg['stride']), 32)  # max stride
-    names = data_cfg['names']  # names
-    pt = True  # pytorch type
+    model = DetectMultiBackend(weights=weights, model_cfg=model_cfg, data_cfg=data_cfg, fp16=half, device=device)
+    stride, names, pt = model.stride, model.names, model.pt
     img_size = check_img_size(img_size, s=stride)  # check image size
 
     # Dataloader
@@ -98,7 +90,7 @@ def run(
     vid_path, vid_writer = [None] * batch_size, [None] * batch_size
 
     # Run inference
-    model.warmup(img_size=(1 if pt else batch_size, 3, *img_size))  # warmup
+    model.warmup(img_size=(1 if pt else batch_size, 3, img_size, img_size))  # warmup
     seen, windows, dt = 0, [], (Profile(), Profile(), Profile())
     for path, img_tensor, img_origin, vid_cap, s in dataset:
         with dt[0]:

@@ -86,7 +86,7 @@ def export_onnx(model, img, ckpt_path, opset, dynamic, simplify, prefix=colorstr
     onnx.checker.check_model(model_onnx)  # check onnx model
 
     # Metadata
-    meta_data = {'stride': model.stride, 'names': model.names}
+    meta_data = {'stride': int(max(model.stride)), 'names': model.names}
     for k, v in meta_data.items():
         meta = model_onnx.metadata_props.add()
         meta.key, meta.value = k, str(v)

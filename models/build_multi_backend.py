@@ -42,11 +42,12 @@ class DetectMultiBackend(nn.Module):
             data_cfg = yaml_load(data_cfg)
             model = DetectorModel(model_cfg, ckpt_path=weights)
             model.num_classes = int(model_cfg['num_classes'])
-            model.stride = [int(s) for s in model_cfg['stride']]
-            model.fuse().eval()
-            stride = max(int(max(model.stride)), 32)  # model stride
-            names = data_cfg['names'] # get class names
+            model.stride = max(max(model_cfg['stride']), stride)
+            model.names = data_cfg['names']
+            model.fuse().eval() if fuse else model.eval()
             model.half() if fp16 else model.float()
+            stride = model.stride # model stride
+            names = model.names  # get class names
             self.model = model  # explicitly assign for to(), cpu(), cuda(), half()
         elif dnn:  # ONNX OpenCV DNN
             LOGGER.info(f'Loading {weights} for ONNX OpenCV DNN inference...')
@@ -159,11 +160,11 @@ class DetectMultiBackend(nn.Module):
     def from_numpy(self, x):
         return torch.from_numpy(x).to(self.device) if isinstance(x, np.ndarray) else x
 
-    def warmup(self, imgsz=(1, 3, 640, 640)):
+    def warmup(self, img_size=(1, 3, 640, 640)):
         # Warmup model by running inference once
         warmup_types = self.pt, self.onnx, self.engine
         if any(warmup_types) and (self.device.type != 'cpu'):
-            im = torch.empty(*imgsz, dtype=torch.half if self.fp16 else torch.float, device=self.device)  # input
+            im = torch.empty(*img_size, dtype=torch.half if self.fp16 else torch.float, device=self.device)  # input
             for _ in range(1):  #
                 self.forward(im)  # warmup
 
