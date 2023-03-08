@@ -40,7 +40,8 @@ class DetectMultiBackend(nn.Module):
         if pt:  # PyTorch
             model_cfg = yaml_load(model_cfg)
             data_cfg = yaml_load(data_cfg)
-            model = DetectorModel(model_cfg, weights, strict=True)
+            model = DetectorModel(model_cfg)
+            model.load_weight(weights, strict=True)
             model.num_classes = int(model_cfg['num_classes'])
             model.stride = max(max(model_cfg['stride']), stride)
             model.names = data_cfg['names']

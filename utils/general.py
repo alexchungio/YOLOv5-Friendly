@@ -595,13 +595,16 @@ def yaml_load(file='dataset.yaml'):
         return yaml.safe_load(f)
 
 
-def load_weight(model, ckpt_path, strict=True):
+def weight_load(model, weight, strict=True):
     try:
-        assert os.path.exists(ckpt_path), f"{ckpt_path} do not exist"
-        ckpt = torch.load(ckpt_path)
+        if isinstance(weight, str):
+            assert os.path.exists(weight), f"{weight} do not exist"
+            ckpt = torch.load(weight)
+        else:
+            ckpt = weight
         state_dict = ckpt['state_dict'] if ckpt.get('state_dict') else ckpt
         model.load_state_dict(state_dict, strict=strict)
-        LOGGER.info(f'Successful load state dict from {ckpt_path}')
+        LOGGER.info(f'Successful load state dict')
     except Exception as e:
         LOGGER.warning(f'Failed load weight ❌, due to {str(e)}')
 
@@ -1009,13 +1012,10 @@ def strip_optimizer(f='best.pt', s=''):  # from utils.general import *; strip_op
     # Strip optimizer from 'f' to finalize training, optionally save as 's'
     x = torch.load(f, map_location=torch.device('cpu'))
     if x.get('ema'):
-        x['model'] = x['ema']  # replace model with ema
+        x['state_dict'] = x['ema']  # replace model with ema
     for k in 'optimizer', 'best_fitness', 'ema', 'updates':  # keys
         x[k] = None
     x['epoch'] = -1
-    x['model'].half()  # to FP16
-    for p in x['model'].parameters():
-        p.requires_grad = False
     torch.save(x, s or f)
     mb = os.path.getsize(s or f) / 1E6  # filesize
     LOGGER.info(f"Optimizer stripped from {f},{f' saved as {s},' if s else ''} {mb:.1f}MB")

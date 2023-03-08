@@ -6,7 +6,7 @@ import torch.nn as nn
 
 from models.network_blocks import Conv, DWConv
 from models import YOLO
-from utils.general import load_weight
+from utils.general import weight_load
 
 
 __all__ = ['DetectorModel']
@@ -63,11 +63,9 @@ class BaseModel(nn.Module):
 
 
 class DetectorModel(BaseModel):
-    def __init__(self, config, ckpt_path=None, strict=True, profile=False, visualize=False, export=False):
+    def __init__(self, config, profile=False, visualize=False, export=False):
         super().__init__(profile=profile, visualize=visualize)
         self.model = YOLO(config, export=export)
-        if ckpt_path:
-            load_weight(self.model, ckpt_path=ckpt_path, strict=strict)
 
     def warmup(self, img_size=(1, 3, 640, 640)):
         """
@@ -77,3 +75,7 @@ class DetectorModel(BaseModel):
         """
         img = torch.empty(*img_size, dtype=torch.half if self.fp16 else torch.float, device=self.device)  # input
         self.forward(img)
+
+    def load_weight(self, weight, strict=True):
+        weight_load(self.model, weight, strict=strict)
+
