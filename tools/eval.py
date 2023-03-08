@@ -148,9 +148,8 @@ def run(
                 batch_size = 1  # export.py models default to batch-size 1
                 LOGGER.info(f'Forcing --batch-size 1 square inference (1,3,{img_size},{img_size}) for non-PyTorch models')
 
-        # Data
-        data = check_dataset(data_cfg)  # check
-
+    # Data
+    data = check_dataset(data_cfg)  # check
     # Configure
     model.eval()
     cuda = device.type != 'cpu'
