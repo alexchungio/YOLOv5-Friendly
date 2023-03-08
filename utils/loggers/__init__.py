@@ -183,7 +183,7 @@ class Loggers():
                 f = self.save_dir / f'train_batch{ni}.jpg'  # filename
                 plot_images(imgs, targets, paths, f)
                 if ni == 0 and self.tb and not self.opt.sync_bn:
-                    log_tensorboard_graph(self.tb, model, imgsz=(self.opt.imgsz, self.opt.imgsz))
+                    log_tensorboard_graph(self.tb, model, imgsz=(self.opt.img_size, self.opt.img_size))
             if ni == 10 and (self.wandb or self.clearml):
                 files = sorted(self.save_dir.glob('train*.jpg'))
                 if self.wandb:

@@ -111,13 +111,13 @@ class ComputeLoss:
         if g > 0:
             BCEcls, BCEobj = FocalLoss(BCEcls, g), FocalLoss(BCEobj, g)
 
-        m = de_parallel(model).model[-1]  # Detect() module
-        self.balance = {3: [4.0, 1.0, 0.4]}.get(m.nl, [4.0, 1.0, 0.25, 0.06, 0.02])  # P3-P7
+        m = de_parallel(model).model.head  # Detect() module
+        self.balance = {3: [4.0, 1.0, 0.4]}.get(m.num_layers, [4.0, 1.0, 0.25, 0.06, 0.02])  # P3-P7
         self.ssi = list(m.stride).index(16) if autobalance else 0  # stride 16 index
         self.BCEcls, self.BCEobj, self.gr, self.hyp, self.autobalance = BCEcls, BCEobj, 1.0, h, autobalance
-        self.na = m.na  # number of anchors
-        self.nc = m.nc  # number of classes
-        self.nl = m.nl  # number of layers
+        self.na = m.num_anchor  # number of anchors
+        self.nc = m.num_classes  # number of classes
+        self.nl = m.num_layers  # number of layers
         self.anchors = m.anchors
         self.device = device
 
@@ -157,7 +157,7 @@ class ComputeLoss:
                 if self.nc > 1:  # cls loss (only if multiple classes)
                     t = torch.full_like(pcls, self.cn, device=self.device)  # targets
                     t[range(n), tcls[i]] = self.cp
-                    lcls += self.BCEcls(pcls, t)  # BCE
+                    lcls += self.BCEcls(pcls.clone(), t.clone())  # BCE
 
                 # Append targets to text file
                 # with open('targets.txt', 'a') as file:

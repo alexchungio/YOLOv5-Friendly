@@ -23,7 +23,7 @@ class YOLOHead(nn.Module):
         self.num_layers = len(anchors) # number of detection scale layer
         self.num_anchor = len(anchors[0]) // 2  # number of anchors
         self.output_channels = (num_classes + 5) * self.num_anchor # (80(classify) + 4(box) + 1(obj_conf)) * 3(anchor)
-        self.stride = stride
+        self.stride = torch.tensor(stride, dtype=torch.int32)
         self.grid = [torch.empty(0) for _ in range(self.num_layers)]  # init grid
         self.anchor_grid = [torch.empty(0) for _ in range(self.num_layers)]  # init anchor grid
         self.anchors = self._gen_anchors(anchors)
