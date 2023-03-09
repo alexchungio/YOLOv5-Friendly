@@ -135,9 +135,8 @@ def train(hyp, opt, device, callbacks):  # hyp is path/to/hyp.yaml or hyp dictio
     model.stride = int(max(model_config['stride']))
     model.names = data_config['names']
 
-    # check AMP
-    # amp = check_amp(model)
-    amp = True
+    # check AMP and use mix-precision train when amp is True
+    amp = check_amp(model)
 
     # Freeze
     freeze = [f'model.model.{x}.' for x in (freeze if len(freeze) > 1 else range(freeze[0]))]  # layers to freeze
@@ -276,10 +275,6 @@ def train(hyp, opt, device, callbacks):  # hyp is path/to/hyp.yaml or hyp dictio
             img_weight = labels_to_image_weights(dataset.labels, nc=num_classes, class_weights=class_weight)  # image weights
             dataset.indices = random.choices(range(dataset.n), weights=img_weight, k=dataset.n)  # rand weighted idx
 
-        # Update mosaic border (optional)
-        # b = int(random.uniform(0.25 * imgsz, 0.75 * imgsz + gs) // gs * gs)
-        # dataset.mosaic_border = [b - imgsz, -b]  # height, width borders
-
         mean_loss = torch.zeros(3, device=device)  # mean losses
         if RANK != -1:
             train_loader.sampler.set_epoch(epoch)
@@ -297,6 +292,7 @@ def train(hyp, opt, device, callbacks):  # hyp is path/to/hyp.yaml or hyp dictio
             if step_per_epoch <= warmup_step:
                 x_interp = [0, warmup_step]  # x interp
                 # compute_loss.gr = np.interp(ni, xi, [0.0, 1.0])  # iou loss ratio (obj_loss = 1.0 or iou)
+                # during the warmup phase do not use gradient accumulate
                 accumulate = max(1, np.interp(step, x_interp, [1, nominal_batch_size / batch_size]).round())
                 for j, x in enumerate(optimizer.param_groups):
                     # bias lr falls from 0.1 to lr0, all other lrs rise from 0.0 to lr0
@@ -326,6 +322,7 @@ def train(hyp, opt, device, callbacks):  # hyp is path/to/hyp.yaml or hyp dictio
             scaler.scale(loss).backward()
 
             # Optimize - https://pytorch.org/docs/master/notes/amp_examples.html
+            # execute gradient accumulate with steps of accumulate
             if step - last_opt_step >= accumulate:
                 scaler.unscale_(optimizer)  # unscale gradients
                 torch.nn.utils.clip_grad_norm_(model.parameters(), max_norm=10.0)  # clip gradients
@@ -356,18 +353,18 @@ def train(hyp, opt, device, callbacks):  # hyp is path/to/hyp.yaml or hyp dictio
             callbacks.run('on_train_epoch_end', epoch=epoch)
             ema.update_attr(model, include=['yaml', 'nc', 'hyp', 'names', 'stride', 'class_weights'])
             final_epoch = (epoch + 1 == epochs) or stopper.possible_stop
-            # if not noval or final_epoch:  # Calculate mAP
-            #     results, maps, _ = validate.run(data_dict,
-            #                                     batch_size=batch_size // WORLD_SIZE * 2,
-            #                                     img_size=img_size,
-            #                                     half=amp,
-            #                                     model=ema.ema,
-            #                                     single_cls=single_cls,
-            #                                     dataloader=val_loader,
-            #                                     save_dir=save_dir,
-            #                                     plots=False,
-            #                                     callbacks=callbacks,
-            #                                     compute_loss=compute_loss)
+            if not noval or final_epoch:  # Calculate mAP
+                results, maps, _ = validate.run(data_dict,
+                                                batch_size=batch_size // WORLD_SIZE * 2,
+                                                img_size=img_size,
+                                                half=amp,
+                                                model=ema.ema,
+                                                single_cls=single_cls,
+                                                dataloader=val_loader,
+                                                save_dir=save_dir,
+                                                plots=False,
+                                                callbacks=callbacks,
+                                                compute_loss=None)
 
             # Update best mAP
             fi = fitness(np.array(results).reshape(1, -1))  # weighted combination of [P, R, mAP@.5, mAP@.5-.95]
@@ -382,8 +379,8 @@ def train(hyp, opt, device, callbacks):  # hyp is path/to/hyp.yaml or hyp dictio
                 ckpt = {
                     'epoch': epoch,
                     'best_fitness': best_fitness,
-                    'state_dict': deepcopy(de_parallel(model)).state_dict(),
-                    'ema': deepcopy(ema.ema).state_dict(),
+                    'state_dict': deepcopy(de_parallel(model)).model.state_dict(),
+                    'ema': deepcopy(ema.ema).model.state_dict(),
                     'updates': ema.updates,
                     'optimizer': optimizer.state_dict(),
                     'opt': vars(opt),
@@ -414,18 +411,19 @@ def train(hyp, opt, device, callbacks):  # hyp is path/to/hyp.yaml or hyp dictio
         LOGGER.info(f'\n{epoch - start_epoch + 1} epochs completed in {(time.time() - t_0) / 3600:.3f} hours.')
         for f in last, best:
             if f.exists():
-
                 strip_optimizer(f)  # strip optimizers
                 if f is best:
                     best_ckpt = torch.load(best, map_location='cpu')
                     model = DetectorModel(model_config)
-                    model.load_weight(best_ckpt['ema'])
+                    model.stride = int(max(model_config['stride']))
+                    model.names = data_config['names']
+                    model.load_weight(best_ckpt['state_dict'])
                     LOGGER.info(f'\nValidating {f}...')
                     results, _, _ = validate.run(
                         data_dict,
                         batch_size=batch_size // WORLD_SIZE * 2,
                         img_size=img_size,
-                        model=best_ckpt.to(device).half(),
+                        model=model.to(device).half(),
                         iou_thres=0.65 if is_coco else 0.60,  # best pycocotools at iou 0.65
                         single_cls=single_cls,
                         dataloader=val_loader,
@@ -434,7 +432,7 @@ def train(hyp, opt, device, callbacks):  # hyp is path/to/hyp.yaml or hyp dictio
                         verbose=True,
                         plots=plots,
                         callbacks=callbacks,
-                        compute_loss=compute_loss)  # val best model with plots
+                        compute_loss=None)  # val best model with plots
                     if is_coco:
                         callbacks.run('on_fit_epoch_end', list(mean_loss) + list(results) + lr, epoch, best_fitness, fi)
 
@@ -451,12 +449,12 @@ def parse_opt(known=False):
     parser.add_argument('--data-cfg', type=str, default=ROOT / 'config/dataset/coco128.yaml', help='dataset.yaml path')
     parser.add_argument('--hyp', type=str, default=ROOT / 'config/hyps/hyp.scratch-low.yaml',
                         help='hyper-parameters path')
-    parser.add_argument('--epochs', type=int, default=1, help='total training epochs')
+    parser.add_argument('--epochs', type=int, default=2, help='total training epochs')
     parser.add_argument('--batch-size', type=int, default=16, help='total batch size for all GPUs, -1 for autobatch')
     parser.add_argument('--img_size', '--img', '--img-size', type=int, default=640,
                         help='train, val image size (pixels)')
     parser.add_argument('--rect', action='store_true', help='rectangular training')
-    parser.add_argument('--resume', nargs='?', const=True, default=False, help='resume most recent training')
+    parser.add_argument('--resume', nargs='?', const=True, default=True, help='resume most recent training')
     parser.add_argument('--nosave', action='store_true', help='only save final checkpoint')
     parser.add_argument('--noval', action='store_true', help='only validate final epoch')
     parser.add_argument('--noautoanchor', action='store_true', help='disable AutoAnchor')
@@ -501,9 +499,9 @@ def main(opt, callbacks=Callbacks()):
 
     # Resume (from specified or most recent last.pt)
     if opt.resume and not check_comet_resume(opt) and not opt.evolve:
-        last = Path(check_file(opt.resume) if isinstance(opt.resume, str) else get_latest_run())
+        last = Path(check_file(opt.resume) if isinstance(opt.resume, str) else get_latest_run('..'))
         opt_yaml = last.parent.parent / 'opt.yaml'  # train options yaml
-        opt_data = opt.data  # original dataset
+        opt_data = opt.data_cfg  # original dataset
         if opt_yaml.is_file():
             with open(opt_yaml, errors='ignore') as f:
                 d = yaml.safe_load(f)
@@ -512,11 +510,11 @@ def main(opt, callbacks=Callbacks()):
         opt = argparse.Namespace(**d)  # replace
         opt.cfg, opt.weights, opt.resume = '', str(last), True  # reinstate
         if is_url(opt_data):
-            opt.data = check_file(opt_data)  # avoid HUB resume auth timeout
+            opt.data_cfg = check_file(opt_data)  # avoid HUB resume auth timeout
     else:
-        opt.data, opt.cfg, opt.hyp, opt.weights, opt.project = \
+        opt.data_cfg, opt.model_cfg, opt.hyp, opt.weights, opt.project = \
             check_file(opt.data_cfg), check_yaml(opt.model_cfg), check_yaml(opt.hyp), str(opt.weights), str(opt.project)
-        assert len(opt.cfg) or len(opt.weights), 'either --cfg or --weights must be specified'
+        assert len(opt.model_cfg) or len(opt.weights), 'either --model-cfg or --weights must be specified'
         if opt.evolve:
             if opt.project == str(ROOT / 'run/train'):  # if default project name, rename to runs/evolve
                 opt.project = str(ROOT / 'run/evolve')
