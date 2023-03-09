@@ -86,7 +86,7 @@ def export_onnx(model, img, ckpt_path, opset, dynamic, simplify, prefix=colorstr
     onnx.checker.check_model(model_onnx)  # check onnx model
 
     # Metadata
-    meta_data = {'stride': int(max(model.stride)), 'names': model.names}
+    meta_data = {'stride': model.stride, 'names': model.names}
     for k, v in meta_data.items():
         meta = model_onnx.metadata_props.add()
         meta.key, meta.value = k, str(v)
@@ -226,17 +226,15 @@ def run(
     if half:
         assert device.type != 'cpu' or coreml, '--half only compatible with GPU export, i.e. use --device 0'
         assert not dynamic, '--half not compatible with --dynamic, i.e. use either --half or --dynamic but not both'
-    model = DetectorModel(model_cfg, export=True)
+    model = DetectorModel(model_cfg, data_cfg=data_cfg, export=True)
     model.load_weight(str(weights), strict=True)
     model.fuse().eval()
-    model.stride = model_cfg['stride']
-    model.names = data_cfg['names']
 
     # Checks
     img_size *= 2 if len(img_size) == 1 else 1  # expand
 
     # Input
-    img_size = [check_img_size(x, int(max(model.stride))) for x in img_size]  # verify img_size are gs-multiples
+    img_size = [check_img_size(x, model.stride) for x in img_size]  # verify img_size are gs-multiples
     img = torch.zeros(batch_size, 3, *img_size).to(device)  # image size(1,3,320,192) BCHW iDetection
 
     # Update model
@@ -253,7 +251,7 @@ def run(
     if half and not coreml:
         im, model = img.half(), model.half()  # to FP16
     shape = tuple((y[0] if isinstance(y, tuple) else y).shape)  # model output shape
-    metadata = {'stride': int(max(model.stride,)), 'names': model.names}  # model metadata
+    metadata = {'stride': model.stride, 'names': model.names}  # model metadata
     LOGGER.info(f"\n{colorstr('PyTorch:')} starting from {ckpt_path} with output shape {shape} ({file_size(ckpt_path):.1f} MB)")
 
     # Exports

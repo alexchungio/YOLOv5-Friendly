@@ -63,9 +63,12 @@ class BaseModel(nn.Module):
 
 
 class DetectorModel(BaseModel):
-    def __init__(self, config, profile=False, visualize=False, export=False):
+    def __init__(self, model_cfg, data_cfg=None, profile=False, visualize=False, export=False):
         super().__init__(profile=profile, visualize=visualize)
-        self.model = YOLO(config, export=export)
+        self.model = YOLO(model_cfg, export=export)
+        self.stride = int(max(model_cfg['stride']))
+        self.num_classes = int(model_cfg['num_classes'])
+        self.names = data_cfg['names'] if data_cfg else None
 
     def warmup(self, img_size=(1, 3, 640, 640)):
         """

@@ -42,7 +42,7 @@ if str(ROOT) not in sys.path:
 
 from data.dataloaders import create_dataloader
 
-import eval as validate  #
+import eval as validate
 from models import DetectorModel
 from utils.auto_anchor import check_anchors
 from utils.auto_batch import check_train_batch_size
@@ -125,15 +125,13 @@ def train(hyp, opt, device, callbacks):  # hyp is path/to/hyp.yaml or hyp dictio
             weights = attempt_download(weights)  # download if not found locally
         ckpt = torch.load(weights, map_location='cpu')
         state_dict = ckpt['state_dict'] if ckpt.get('state_dict') else ckpt
-        model = DetectorModel(config=model_config).to(device)  # create
+        model = DetectorModel(model_cfg=model_config, data_cfg=data_config).to(device)  # create
         exclude = ['anchor'] if (model_config or hyp.get('anchors')) and not resume else []  # exclude keys
         state_dict = intersect_dicts(state_dict, model.model.state_dict(), exclude=exclude)  # intersect
         model.load_weight(state_dict, strict=False)  # load
         LOGGER.info(f'Transferred {len(state_dict)}/{len(model.model.state_dict())} items from {weights}')  # report
     else:
-        model = DetectorModel(config=model_config).to(device)  # create
-    model.stride = int(max(model_config['stride']))
-    model.names = data_config['names']
+        model = DetectorModel(model_cfg=model_config, data_cfg=data_config).to(device)  # create
 
     # check AMP and use mix-precision train when amp is True
     amp = check_amp(model)
@@ -413,9 +411,7 @@ def train(hyp, opt, device, callbacks):  # hyp is path/to/hyp.yaml or hyp dictio
             if f.exists():
                 strip_optimizer(f)  # strip optimizers
                 if f is best:
-                    model = DetectorModel(model_config)
-                    model.stride = int(max(model_config['stride']))
-                    model.names = data_config['names']
+                    model = DetectorModel(model_config, data_cfg=data_config)
                     model.load_weight(str(best), strict=True)
                     LOGGER.info(f'\nValidating {f}...')
                     results, _, _ = validate.run(
