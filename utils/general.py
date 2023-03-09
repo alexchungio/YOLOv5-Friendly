@@ -609,7 +609,7 @@ def yaml_load(file='dataset.yaml'):
         return yaml.safe_load(f)
 
 
-def weight_load(model, weight, strict=True):
+def weight_load(model, weight, exclude=('head.anchors',), strict=True):
     try:
         if isinstance(weight, str):
             assert os.path.exists(weight), f"{weight} do not exist"
@@ -617,7 +617,10 @@ def weight_load(model, weight, strict=True):
         else:
             ckpt = weight
         state_dict = ckpt['state_dict'] if ckpt.get('state_dict') else ckpt['ema'] if ckpt.get('ema') else ckpt
-        model.load_state_dict(state_dict, strict=strict)
+        valid_state_dict = {k: v for k, v in state_dict.items() if k not in exclude}
+        model_state_dict = model.state_dict()
+        model_state_dict.update(valid_state_dict)
+        model.load_state_dict(model_state_dict, strict=strict)
         weight_info = weight if isinstance(weight, str) else 'weight'
         LOGGER.info(f'Successful load state dict from {weight_info}')
     except Exception as e:
