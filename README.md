@@ -19,8 +19,8 @@ python tools/detector.py
 ### show result(with yolov5s_friendly)
 
 <div align="center">
-    <img src=output/detect/exp/sand.jpg alt="sand" width="800"/>
-    <img src=output/detect/exp/zidane.jpg alt="zidane" width="800"/>
+    <img src=runs/detect/exp/sand.jpg alt="sand" width="800"/>
+    <img src=runs/detect/exp/zidane.jpg alt="zidane" width="800"/>
 </div>
 
 ## Export
@@ -54,7 +54,7 @@ python tools/model_convert/yolov5_to_friendly.py --src yolov5s.pt --dst yolov5s_
 *all of our models are trained from scratch on COCO. We do not have any ImageNet trained models @glenn-jocher.*[reference](https://github.com/ultralytics/yolov5/issues/5422)
 
 ## TODO
-- [ ] Train
+- [x] Train
 - [x] Evaluation
 - [x] Export
 
