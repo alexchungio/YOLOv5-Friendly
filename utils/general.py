@@ -616,9 +616,10 @@ def weight_load(model, weight, strict=True):
             ckpt = torch.load(weight)
         else:
             ckpt = weight
-        state_dict = ckpt['state_dict'] if ckpt.get('state_dict') else ckpt
+        state_dict = ckpt['state_dict'] if ckpt.get('state_dict') else ckpt['ema'] if ckpt.get('ema') else ckpt
         model.load_state_dict(state_dict, strict=strict)
-        LOGGER.info(f'Successful load state dict')
+        weight_info = weight if isinstance(weight, str) else 'weight'
+        LOGGER.info(f'Successful load state dict from {weight_info}')
     except Exception as e:
         LOGGER.warning(f'Failed load weight ❌, due to {str(e)}')
 
@@ -1028,7 +1029,7 @@ def strip_optimizer(f='best.pt', s=''):  # from utils.general import *; strip_op
     if x.get('ema'):
         x['state_dict'] = x['ema']  # replace model with ema
     for k in 'optimizer', 'best_fitness', 'ema', 'updates':  # keys
-        x[k] = None
+        x.pop(k)
     x['epoch'] = -1
     torch.save(x, s or f)
     mb = os.path.getsize(s or f) / 1E6  # filesize

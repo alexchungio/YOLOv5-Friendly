@@ -379,8 +379,8 @@ def train(hyp, opt, device, callbacks):  # hyp is path/to/hyp.yaml or hyp dictio
                 ckpt = {
                     'epoch': epoch,
                     'best_fitness': best_fitness,
-                    'state_dict': deepcopy(de_parallel(model)).model.state_dict(),
-                    'ema': deepcopy(ema.ema).model.state_dict(),
+                    'state_dict': deepcopy(de_parallel(model)).model.half().state_dict(),
+                    'ema': deepcopy(ema.ema).model.half().state_dict(),
                     'updates': ema.updates,
                     'optimizer': optimizer.state_dict(),
                     'opt': vars(opt),
@@ -413,11 +413,10 @@ def train(hyp, opt, device, callbacks):  # hyp is path/to/hyp.yaml or hyp dictio
             if f.exists():
                 strip_optimizer(f)  # strip optimizers
                 if f is best:
-                    best_ckpt = torch.load(best, map_location='cpu')
                     model = DetectorModel(model_config)
                     model.stride = int(max(model_config['stride']))
                     model.names = data_config['names']
-                    model.load_weight(best_ckpt['state_dict'])
+                    model.load_weight(str(best), strict=True)
                     LOGGER.info(f'\nValidating {f}...')
                     results, _, _ = validate.run(
                         data_dict,
@@ -449,12 +448,12 @@ def parse_opt(known=False):
     parser.add_argument('--data-cfg', type=str, default=ROOT / 'config/dataset/coco128.yaml', help='dataset.yaml path')
     parser.add_argument('--hyp', type=str, default=ROOT / 'config/hyps/hyp.scratch-low.yaml',
                         help='hyper-parameters path')
-    parser.add_argument('--epochs', type=int, default=200, help='total training epochs')
+    parser.add_argument('--epochs', type=int, default=1, help='total training epochs')
     parser.add_argument('--batch-size', type=int, default=16, help='total batch size for all GPUs, -1 for autobatch')
     parser.add_argument('--img_size', '--img', '--img-size', type=int, default=640,
                         help='train, val image size (pixels)')
     parser.add_argument('--rect', action='store_true', help='rectangular training')
-    parser.add_argument('--resume', nargs='?', const=True, default=True, help='resume most recent training')
+    parser.add_argument('--resume', nargs='?', const=True, default=False, help='resume most recent training')
     parser.add_argument('--nosave', action='store_true', help='only save final checkpoint')
     parser.add_argument('--noval', action='store_true', help='only validate final epoch')
     parser.add_argument('--noautoanchor', action='store_true', help='disable AutoAnchor')
