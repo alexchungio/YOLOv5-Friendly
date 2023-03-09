@@ -90,7 +90,7 @@ def run(
     vid_path, vid_writer = [None] * batch_size, [None] * batch_size
 
     # Run inference
-    model.warmup(img_size=(1 if pt else batch_size, 3, img_size, img_size))  # warmup
+    model.warmup(img_size=(1 if pt else batch_size, 3, *img_size))  # warmup
     seen, windows, dt = 0, [], (Profile(), Profile(), Profile())
     for path, img_tensor, img_origin, vid_cap, s in dataset:
         with dt[0]:
