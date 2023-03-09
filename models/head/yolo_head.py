@@ -26,7 +26,8 @@ class YOLOHead(nn.Module):
         self.stride = torch.tensor(stride, dtype=torch.int32)
         self.grid = [torch.empty(0) for _ in range(self.num_layers)]  # init grid
         self.anchor_grid = [torch.empty(0) for _ in range(self.num_layers)]  # init anchor grid
-        self.anchors = self._gen_anchors(anchors)
+        # add state to buffer to keep the state have same device with model parameter
+        self.register_buffer('anchors', self._gen_anchors(anchors))
         # output head
         self.blocks = nn.ModuleList(nn.Conv2d(int(feature_channels[i] * width_mul), self.output_channels, 1)
                                     for i in range(self.num_layers))
