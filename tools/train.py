@@ -449,7 +449,7 @@ def parse_opt(known=False):
     parser.add_argument('--data-cfg', type=str, default=ROOT / 'config/dataset/coco128.yaml', help='dataset.yaml path')
     parser.add_argument('--hyp', type=str, default=ROOT / 'config/hyps/hyp.scratch-low.yaml',
                         help='hyper-parameters path')
-    parser.add_argument('--epochs', type=int, default=2, help='total training epochs')
+    parser.add_argument('--epochs', type=int, default=200, help='total training epochs')
     parser.add_argument('--batch-size', type=int, default=16, help='total batch size for all GPUs, -1 for autobatch')
     parser.add_argument('--img_size', '--img', '--img-size', type=int, default=640,
                         help='train, val image size (pixels)')
