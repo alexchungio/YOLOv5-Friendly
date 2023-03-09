@@ -1,12 +1,9 @@
-import os
-import yaml
+
 import torch
 import torch.nn as nn
 
 import models
 from models import backbones, neck, head
-
-from utils.general import yaml_load
 
 
 __all__ = ['YOLO']
@@ -62,6 +59,9 @@ class YOLO(nn.Module):
 
 
 if __name__ == "__main__":
+
+    from utils.general import yaml_load
+
     config = '/Users/alex/Documents/code/YOLOv5-Friendly/config/model/yolov5s_p5.yaml'
     ckpt_path = '/Users/alex/Documents/code/YOLOv5-Friendly/weights/yolov5s_friendly.pt'
 

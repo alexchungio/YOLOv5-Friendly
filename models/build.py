@@ -1,5 +1,5 @@
 
-import os
+import math
 import torch
 import torch.nn as nn
 
@@ -112,6 +112,8 @@ class DetectorModel(BaseModel):
         self.stride = int(max(model_cfg['stride']))
         self.num_classes = int(model_cfg['num_classes'])
         self.names = data_cfg['names'] if data_cfg else None
+        self._initialize_biases()
+        self._initialize_weights()
 
     def warmup(self, img_size=(1, 3, 640, 640)):
         """
@@ -124,4 +126,37 @@ class DetectorModel(BaseModel):
 
     def load_weight(self, weight, strict=True):
         weight_load(self.model, weight, strict=strict)
+
+    def _initialize_biases(self, cf=None):
+        """
+        initialize head biases
+        """
+        # https://arxiv.org/abs/1708.02002 section 3.3
+        head = self.model.head  # Detect() module
+        for blocks, stride in zip(head.blocks, head.stride):  # from
+            bias = blocks.bias.view(head.num_anchor, -1)  # conv.bias(255) to (3,85)
+            bias.data[:, 4] += math.log(8 / (640 / stride) ** 2)  # obj (8 objects per 640 image)
+            bias.data[:, 5:5 + head.num_classes] += math.log(0.6 / (head.num_classes - 0.99999)) \
+                if cf is None else torch.log(cf / cf.sum())  # cls
+            blocks.bias = torch.nn.Parameter(bias.view(-1), requires_grad=True)
+
+    def _initialize_weights(self):
+        for m in self.model.modules():
+            t = type(m)
+            if t is nn.Conv2d:
+                pass  # nn.init.kaiming_normal_(m.weight, mode='fan_out', nonlinearity='relu')
+            elif t is nn.BatchNorm2d:
+                m.eps = 1e-3
+                m.momentum = 0.03
+            elif t in [nn.Hardswish, nn.LeakyReLU, nn.ReLU, nn.ReLU6, nn.SiLU]:
+                m.inplace = True
+
+
+if __name__ == "__main__":
+    from utils.general import yaml_load
+
+    model_cfg = '/Users/alex/Documents/code/YOLOv5-Friendly/config/model/yolov5s_p5.yaml'
+    model_config = yaml_load(model_cfg)
+    model = DetectorModel(model_config)
+    pass
 

@@ -209,18 +209,6 @@ def de_parallel(model):
     return model.module if is_parallel(model) else model
 
 
-def initialize_weights(model):
-    for m in model.modules():
-        t = type(m)
-        if t is nn.Conv2d:
-            pass  # nn.init.kaiming_normal_(m.weight, mode='fan_out', nonlinearity='relu')
-        elif t is nn.BatchNorm2d:
-            m.eps = 1e-3
-            m.momentum = 0.03
-        elif t in [nn.Hardswish, nn.LeakyReLU, nn.ReLU, nn.ReLU6, nn.SiLU]:
-            m.inplace = True
-
-
 def find_modules(model, mclass=nn.Conv2d):
     # Finds layer indices matching module class 'mclass'
     return [i for i, m in enumerate(model.module_list) if isinstance(m, mclass)]
