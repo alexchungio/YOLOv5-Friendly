@@ -3,11 +3,12 @@
 Train a YOLOv5-Friendly model on a custom dataset.
 
 Usage - Single-GPU training:
-    $ python train.py --data-cfg coco128.yaml --model-cfg yolov5s.yaml --weights yolov5s.pt --img-size 640  # from pretrained
+    $ python train.py --data-cfg coco128.yaml --model-cfg yolov5s.yaml --weights yolov5s_friendly.pt --img-size 640  # from pretrained
     $ python train.py --data-cfg coco128.yaml --model-cfg yolov5s.yaml --weights '' --img-size 640  # from scratch
 
 Usage - Multi-GPU DDP training:
-    $ python -m torch.distributed.run --nproc_per_node 4 --master_port 1 train.py -data-cfg coco128.yaml --model-cfg yolov5s.yaml --weights yolov5s.pt --img-size 640 --device 0,1,2,3
+    $ python -m torch.distributed.run --nproc_per_node 4 --master_port 1 train.py --data-cfg coco128.yaml
+      --model-cfg yolov5s_friendly.yaml --weights yolov5s_friendly.pt --img-size 640 --device 0,1,2,3
 """
 
 import argparse
@@ -56,9 +57,9 @@ from utils.plots import plot_evolve
 from utils.torch_utils import (EarlyStopping, ModelEMA, de_parallel, select_device, smart_DDP, smart_optimizer,
                                smart_resume, torch_distributed_zero_first)
 
-LOCAL_RANK = int(os.getenv('LOCAL_RANK', -1))  # https://pytorch.org/docs/stable/elastic/run.html
-RANK = int(os.getenv('RANK', -1))
-WORLD_SIZE = int(os.getenv('WORLD_SIZE', 1))
+LOCAL_RANK = int(os.environ['LOCAL_RANK'])  # https://pytorch.org/docs/stable/elastic/run.html
+RANK = int(os.environ['RANK'])
+WORLD_SIZE = int(os.environ['WORLD_SIZE'])
 GIT_INFO = check_git_info()
 
 

@@ -3,8 +3,13 @@
 Implement a friendly version of YOLOv5 by reconstruct [ultralytics/yolov5](https://github.com/ultralytics/yolov5) repo.
 
 ## Train
+* training(with single gpu)
 ```commandline
 python tools/train.py
+```
+* ddp training(with multi gpu)
+```commandline
+bash tool/train.sh
 ```
 
 ## Evaluation
