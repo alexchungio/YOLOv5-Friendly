@@ -9,7 +9,7 @@ python tools/train.py
 ```
 * ddp training(with multi gpu)
 ```commandline
-bash tool/train.sh
+bash tool/dist_train.sh
 ```
 
 ## Evaluation

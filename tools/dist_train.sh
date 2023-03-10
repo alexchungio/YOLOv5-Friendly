@@ -15,6 +15,8 @@ python -m torch.distributed.run \
     --nproc_per_node=$GPUS \
     --master_port=$PORT \
     tools/train.py \
-    --data-cfg config/dataset/coco128.yaml \
-    --model-cfg config/model/yolov5s_friendly.yaml  \
-    --weights weights/yolov5s_friendly.pt
+    --data-cfg config/dataset/coco.yaml \
+    --model-cfg config/model/yolov5s_friendly.yaml \
+    --weights '' \
+    --batch-size 64 \
+    --epochs 300
