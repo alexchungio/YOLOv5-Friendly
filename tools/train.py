@@ -57,9 +57,9 @@ from utils.plots import plot_evolve
 from utils.torch_utils import (EarlyStopping, ModelEMA, de_parallel, select_device, smart_DDP, smart_optimizer,
                                smart_resume, torch_distributed_zero_first)
 
-LOCAL_RANK = int(os.environ['LOCAL_RANK'])  # https://pytorch.org/docs/stable/elastic/run.html
-RANK = int(os.environ['RANK'])
-WORLD_SIZE = int(os.environ['WORLD_SIZE'])
+LOCAL_RANK = int(os.environ.get('LOCAL_RANK', -1))  # https://pytorch.org/docs/stable/elastic/run.html
+RANK = int(os.environ.get('RANK', -1))
+WORLD_SIZE = int(os.environ.get('WORLD_SIZE', 1))
 GIT_INFO = check_git_info()
 
 
