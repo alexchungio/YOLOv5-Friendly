@@ -53,7 +53,7 @@ python tools/model_convert/yolov5_to_friendly.py --src yolov5s.pt --dst yolov5s_
 ```
 
 ## Log
-### the official release code and the model not alignment
+### the BN value do not use default value
 * adjust BN default param: `eps=0.001`, `momentum=0.03`
 ### training do not use ImageNet pretrained model
 *all of our models are trained from scratch on COCO. We do not have any ImageNet trained models @glenn-jocher.*[reference](https://github.com/ultralytics/yolov5/issues/5422)

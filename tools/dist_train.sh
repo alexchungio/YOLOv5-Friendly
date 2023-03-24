@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 
-VISIBLE_GPU=0
+VISIBLE_GPU=0,1
 GPUS=${GPUS:-1}
 NNODES=${NNODES:-1}
 NODE_RANK=${NODE_RANK:-0}
